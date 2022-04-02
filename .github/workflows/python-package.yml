@@ -38,60 +38,16 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v2
-
+        
       - name: Docker Login
         env:
           GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
         run: | 
           echo '${{ secrets.GOOGLE_CREDENTIALS }}' > key.json
           cat key.json | docker login -u _json_key --password-stdin https://us-central1-docker.pkg.dev/
-          
       - name: Build Image & Push
         env: 
           ARTIFACT_REGISTRY: ${{ secrets.ARTIFACT_REGISTRY }}
         run: | 
           docker build -t ${{ secrets.ARTIFACT_REGISTRY }}/myapp:latest .
           docker push ${{ secrets.ARTIFACT_REGISTRY }}/myapp:latest
-
-
-      - name: Deploy to Cloud Run
-        # You may pin to the exact commit or the version.
-        # uses: google-github-actions/deploy-cloudrun@0866bc2ee44b61f9c49f1ab81726e7056fb249a2
-        uses: google-github-actions/deploy-cloudrun@v0.9.0
-        with:
-          # Name of the container image to deploy (e.g. gcr.io/cloudrun/hello:latest). Required if not using a service YAML.
-          image: ${{ secrets.ARTIFACT_REGISTRY  }}
-          # ID of the service or fully qualified identifier for the service.  Required if not using a service YAML.
-          service: # optional
-          # Region in which the resource can be found.
-          region: # optional, default is us-central1
-          # List of key-value pairs to set as environment variables in the format:     KEY1=VALUE1,KEY2=VALUE2. Existing environment variables will be retained.
-          env_vars: # optional
-          # List of key-value pairs to set as either environment variables or mounted volumes in the format:  KEY1=secret-key-1:latest,/secrets/api/key=secret-key-2:latest. Existing secrets will be retained.
-          secrets: # optional
-          # YAML service description for the Cloud Run service.
-          metadata: # optional
-          # The GCP project ID. Overrides project ID set by credentials.
-          project_id: # optional
-          # Service account key to use for authentication. This should be the JSON formatted private key which can be exported from the Cloud Console. The value can be raw or base64-encoded. Required if not using a the  setup-gcloud action with exported credentials.
-          credentials: # optional
-          # The location of the source to build. The location can be a directory on  a local disk or a gzipped archive file (.tar.gz) in Google Cloud Storage.  The role `Cloud Build Service Account` is required.
-          source: # optional
-          # Specify the suffix of the revision name. Revision names always start with  the service name automatically. For example, specifying 'v1' for a service  named 'helloworld', would lead to a revision named 'helloworld-v1'.
-          suffix: # optional
-          # Traffic tag to assign to the newly created revision.
-          tag: # optional
-          # Set the maximum request execution time. It is specified as a duration; for example, "10m5s" is ten minutes and five seconds. If you don't specify a  unit, seconds is assumed.
-          timeout: # optional
-          # True to avoid sending traffic to the revision being deployed. Setting  this flag assigns any traffic assigned to the LATEST revision to the  specific revision bound to LATEST before the deployment. The effect is that the revision being deployed will not receive traffic. After a  deployment with this flag the LATEST revision will not receive traffic on future deployments.
-          no_traffic: # optional
-          # Comma separated list of traffic assignments in the form REVISION-NAME=PERCENTAGE. REVISION-NAME must be the name for a revision for the service as returned      by 'gcloud beta run list revisions'. PERCENTAGE must be an integer
-          revision_traffic: # optional
-          # Comma separated list of traffic assignments in the form TAG=PERCENTAGE.
-          tag_traffic: # optional
-          # Space separated list of other Cloud Run flags, examples can be found:      https://cloud.google.com/sdk/gcloud/reference/run/deploy#FLAGS. Ex      --service-account=my-account@project.iam.gserviceaccount.com --concurrency=10
-          flags: # optional
-          # Version of the Cloud SDK to install. If unspecified or set to "latest",     the latest available gcloud SDK version for the target platform will be      installed. Example: "290.0.1".
-          gcloud_version: # optional
-          # Version of the Cloud SDK components to install and use. If unspecified, the latest  or released version will be used. This is the equivalent of running 'gcloud alpha run' or 'gcloud beta run'. Valid values are `alpha` or `beta`.
-          gcloud_component: # optional
