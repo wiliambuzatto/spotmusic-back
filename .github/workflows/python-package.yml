@@ -67,7 +67,7 @@ jobs:
         with:
           credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
           
-     - name: Deploy Backend no  Cloud Run
+      - name: Deploy Backend no  Cloud Run
         id: deploy
         run: |-
           gcloud run deploy backend \
