@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2        
         
       - name: Docker Login
         env:
@@ -44,9 +44,40 @@ jobs:
         run: | 
           echo '${{ secrets.GOOGLE_CREDENTIALS }}' > key.json
           cat key.json | docker login -u _json_key --password-stdin https://us-central1-docker.pkg.dev/
+          
       - name: Build Image & Push
         env: 
           ARTIFACT_REGISTRY: ${{ secrets.ARTIFACT_REGISTRY }}
         run: | 
           docker build -t ${{ secrets.ARTIFACT_REGISTRY }}/myapp:latest .
           docker push ${{ secrets.ARTIFACT_REGISTRY }}/myapp:latest
+
+  Deploy:
+    needs: Build
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Clone do repo
+        uses: actions/checkout@v2
+        
+      - name: Autenticao no GCP
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        with:
+          credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+          
+      - name: Deploy no Cloud Run
+        id: deploy
+        run: |-
+          gcloud run deploy backend \
+            --quiet \
+            --region ${{ secrets.GOOGLE_REGION }} \
+            --image ${{ secrets.ARTIFACT_REGISTRY }}/backend:latest \
+            --platform managed \
+            --set-env-vars CLOUD_SQL_CONNECTION_NAME=${{ secrets.CLOUD_SQL_CONNECTION_NAME }}, CLOUD_SQL_DATABASE_NAME=${{ secrets.CLOUD_SQL_DATABASE_NAME }}, CLOUD_SQL_USERNAME=${{ secrets.CLOUD_SQL_USERNAME }}, CLOUD_SQL_PASSWORD=${{ secrets.CLOUD_SQL_PASSWORD }}, DB_LOCAL_HOST=${{ secrets.DB_LOCAL_HOST }},
+            --allow-unauthenticated \
+            --add-cloud-instances ${{ secrets.CLOUD_SQL_CONNECTION_NAME }}
+            --project ${{ secrets.GOOGLE_PROJECT_ID }} \
+            --format json
+      
+      
